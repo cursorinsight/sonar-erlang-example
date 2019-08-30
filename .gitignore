@@ -10,3 +10,5 @@ _*
 doc
 ebin
 erl_crash.dump
+
+/.scannerwork/
