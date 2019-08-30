@@ -1,0 +1,17 @@
+%%%-----------------------------------------------------------------------------
+%%% Copyright (C) 2019 Cursor Insight
+%%%
+%%% All rights reserved.
+%%%-----------------------------------------------------------------------------
+
+{application, sonar_erlang_example,
+ [{description, "Example project to test SonarQube's `sonar-erlang` plugin"},
+  {vsn, "0.0.0"},
+  {modules, []},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {mod, {sonar_erlang_example_app, []}}
+ ]}.
