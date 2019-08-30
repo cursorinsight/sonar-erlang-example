@@ -36,6 +36,11 @@
       State :: term(),
       Reason :: term().
 start(_StartType, _StartArgs) ->
+    ok = sonar_erlang_example:call_without_spec(),
+    ok = sonar_erlang_example:call_without_doc(),
+    ok = sonar_erlang_example:try_catch_with_ces(),
+    ok = sonar_erlang_example:eunit_covered_function(),
+    ok = sonar_erlang_example:ct_covered_function(),
     sonar_erlang_example_sup:start_link().
 
 %%------------------------------------------------------------------------------

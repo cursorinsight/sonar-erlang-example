@@ -32,7 +32,8 @@
 -spec all() -> Result when
       Result :: [test_case()].
 all() ->
-    [basic_test_TEST].
+    [basic_test_TEST,
+     cover_TEST].
 
 %%%-----------------------------------------------------------------------------
 %%% Test suite init/end
@@ -92,6 +93,16 @@ end_per_testcase(_Testcase, _Config)->
       Config :: config().
 basic_test_TEST(_Config) ->
     ?assertEqual(ok, ok),
+    ok.
+
+%%------------------------------------------------------------------------------
+%% @doc Simple test case providing code coverage only.
+%% @end
+%%------------------------------------------------------------------------------
+-spec cover_TEST(Config) -> ok when
+      Config :: config().
+cover_TEST(_Config) ->
+    ?assertEqual(ok, sonar_erlang_example:ct_covered_function()),
     ok.
 
 %%%=============================================================================
