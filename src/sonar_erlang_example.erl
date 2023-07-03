@@ -14,6 +14,7 @@
 -export([call_without_spec/0,
          call_without_doc/0,
          try_catch_with_ces/0,
+         call__With_wrong_name/0,
          eunit_covered_function/0,
          ct_covered_function/0,
          not_used_call/0]).
@@ -49,6 +50,15 @@ try_catch_with_ces() ->
         _C:_E:_S ->
             ok
     end.
+
+%%------------------------------------------------------------------------------
+%% @doc Function with wrong naming conventions.
+%% @end
+%%------------------------------------------------------------------------------
+-spec call__With_wrong_name() -> ok.
+call__With_wrong_name() ->
+    _variableWithWrongName = 5,
+    ok.
 
 %%------------------------------------------------------------------------------
 %% @doc Eunit covered function

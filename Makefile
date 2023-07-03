@@ -7,6 +7,7 @@
 # Build tools
 REBAR := $(shell which rebar3)
 ERL := $(shell which erl)
+ELVIS := $(shell which elvis)
 
 # Common directories and paths
 TOP_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
@@ -15,6 +16,7 @@ BUILD_DIR := $(TOP_DIR)/_build
 
 # Specific Erlang flags that is compatible with this project
 BEAM_FLAGS := ERL_FLAGS="$(ERL_FLAGS)"
+ELVIS_FLAGS := -c $(TOP_DIR)/elvis.config --output-format parsable
 
 # Necessary directories
 TEST_LOGS_DIR := $(BUILD_DIR)/test/logs
@@ -28,7 +30,7 @@ COVER_FILES := $(COVER_DIR)/eunit.coverdata $(COVER_DIR)/ct.coverdata
 all: test
 
 .PHONY: test
-test: docs compile xref dialyzer eunit ct cover merge-cover
+test: docs compile xref dialyzer eunit ct cover elvis-check
 
 .PHONY: everything
 everything: mrproper test
@@ -38,7 +40,15 @@ ifeq "$(strip $(REBAR))" ""
 REBAR := rebar
 endif
 
+ifeq "$(strip $(ELVIS))" ""
+ELVIS := elvis
+endif
+
 $(REBAR):
+	@echo Please install \`$@\' manually!
+	@exit 1
+
+$(ELVIS):
 	@echo Please install \`$@\' manually!
 	@exit 1
 
@@ -110,7 +120,7 @@ xref: $(REBAR) $(TEST_LOGS_DIR)
 
 .PHONY: dialyzer
 dialyzer: $(REBAR)
-	$(REBAR) dialyzer
+	$(REBAR) dialyzer > $(TEST_LOGS_DIR)/dialyzer.txt
 
 .PHONY: eunit
 eunit: $(REBAR)
@@ -149,3 +159,7 @@ sonar: $(SONAR_SCANNER)
 .PHONY: shell
 shell: $(REBAR)
 	$(BEAM_FLAGS) $(REBAR) shell
+
+.PHONY: elvis-check
+elvis-check: $(ELVIS) #: Run the Elvis style reviewer.
+	$(ELVIS) $(ELVIS_FLAGS) rock > $(TEST_LOGS_DIR)/elvis_rock.txt
