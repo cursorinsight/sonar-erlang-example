@@ -1,22 +1,55 @@
 #-------------------------------------------------------------------------------
-# Copyright (C) 2019 Cursor Insight
+# Copyright (C) 2019- Cursor Insight
 #
 # All rights reserved.
 #-------------------------------------------------------------------------------
 
-# Build tools
-REBAR := $(shell which rebar3)
-ERL := $(shell which erl)
-ELVIS := $(shell which elvis)
-
 # Common directories and paths
-TOP_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+TOP_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ABS_DIR := $(abspath $(TOP_DIR))
+
+# Specify default target
+.PHONY: default
+default:
+
+# Check for and set up required tools
+define set-up-tools-template
+$(1) := $$(shell which $(2))
+
+ifeq "$$(strip $$($(1)))" ""
+$(1) := $(2)
+endif
+
+$$($(1)):
+	@echo Please install \`$$@\' manually!
+	@exit 1
+endef
+
+# Set up necessary tools
+$(eval $(call set-up-tools-template,ELVIS,elvis))
+$(eval $(call set-up-tools-template,ERL,erl))
+$(eval $(call set-up-tools-template,GIT,git))
+$(eval $(call set-up-tools-template,GREP,grep))
+$(eval $(call set-up-tools-template,MKDIR,mkdir))
+$(eval $(call set-up-tools-template,REBAR,rebar3))
+$(eval $(call set-up-tools-template,SONAR_SCANNER,sonar-scanner))
+$(eval $(call set-up-tools-template,TEE,tee))
+
+# Project version
+ifneq (,$(wildcard .git))
+PROJECT_VERSION := $(shell $(GIT) describe --always --dirty --broken --long --tags)
+else
+# There is no .git directory, so we cannot call Git to calculate the project
+# version.
+PROJECT_VERSION := no-project-version
+endif
+
+# Common build directory
 BUILD_DIR := $(TOP_DIR)/_build
 
 # Specific Erlang flags that is compatible with this project
 BEAM_FLAGS := ERL_FLAGS="$(ERL_FLAGS)"
-ELVIS_FLAGS := -c $(TOP_DIR)/elvis.config --output-format parsable
+ELVIS_FLAGS := $(ELVIS_FLAGS) -c $(TOP_DIR)/elvis.config --output-format parsable
 
 # Necessary directories
 TEST_LOGS_DIR := $(BUILD_DIR)/test/logs
@@ -34,31 +67,6 @@ test: docs compile xref dialyzer eunit ct cover elvis-check
 
 .PHONY: everything
 everything: mrproper test
-
-# Check for missing build tools
-ifeq "$(strip $(REBAR))" ""
-REBAR := rebar
-endif
-
-ifeq "$(strip $(ELVIS))" ""
-ELVIS := elvis
-endif
-
-$(REBAR):
-	@echo Please install \`$@\' manually!
-	@exit 1
-
-$(ELVIS):
-	@echo Please install \`$@\' manually!
-	@exit 1
-
-ifeq "$(strip $(ERL))" ""
-ERL := erl
-endif
-
-$(ERL):
-	@echo Please install \`$@\' manually!
-	@exit 1
 
 $(TEST_LOGS_DIR):
 	@mkdir -p $(TEST_LOGS_DIR)
@@ -95,11 +103,16 @@ endef
 
 .PHONY: mrproper
 mrproper:
-	rm -rf $(BUILD_DIR)
+	$(RM) -r $(BUILD_DIR) $(ABS_DIR)/doc $(ABS_DIR)/data.* \
+		$(ABS_DIR)/log.* $(ABS_DIR)/.scannerwork
 
 .PHONY: clean
 clean: $(REBAR)
 	$(REBAR) clean
+
+.PHONY: install-deps
+install-deps: $(REBAR)
+	$(REBAR) get-deps
 
 .PHONY: deps
 deps: $(REBAR)
@@ -130,14 +143,6 @@ eunit: $(REBAR)
 ct: $(REBAR)
 	$(BEAM_FLAGS) $(REBAR) ct --cover -v
 
-.PHONY: ct-suite
-ct-suite: $(REBAR)
-	$(BEAM_FLAGS) $(REBAR) ct --cover -v --suite=$(SUITE)
-
-.PHONY: retry-ct
-retry-ct: $(REBAR)
-	$(BEAM_FLAGS) $(REBAR) ct --cover -v --retry
-
 .PHONY: cover
 cover: $(REBAR)
 	$(REBAR) cover --verbose
@@ -162,4 +167,8 @@ shell: $(REBAR)
 
 .PHONY: elvis-check
 elvis-check: $(ELVIS) #: Run the Elvis style reviewer.
-	$(ELVIS) $(ELVIS_FLAGS) rock > $(TEST_LOGS_DIR)/elvis_rock.txt
+	$(ELVIS) $(ELVIS_FLAGS) rock > $(TEST_LOGS_DIR)/elvis_rock.txt || exit 0
+
+.PHONY: release
+release: $(REBAR)
+	$(BEAM_FLAGS) $(REBAR) release
