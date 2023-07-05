@@ -52,4 +52,6 @@ available in `doc/index.html`.
 
 A single test suite can be executed alone, e.g.:
 
-    SUITE=test/<app>_SUITE make ct-suite
+```
+SUITE=test/<app>_SUITE make ct-suite
+```
